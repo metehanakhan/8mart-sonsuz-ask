@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonsuz Aşk Hikayesi - Ebrarım</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&family=Playfair+Display:ital,wght@1,500;1,700&display=swap');
+        
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #080015;
+            font-family: 'Montserrat', sans-serif;
+            color: white;
+            transition: background 2s ease;
+        }
+        
+        canvas { 
+            display: block; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            z-index: 1; 
+        }
+
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a0b3e 0%, #080015 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 2s ease;
+            cursor: none;
+        }
+
+        /* GİZLİ MESAJ */
+        #hidden-secret {
+            position: absolute;
+            top: 30%;
+            left: 65%;
+            transform: translateX(-50%);
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: #f7cac9;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease, filter 0.4s ease, text-shadow 0.4s ease;
+            filter: blur(15px);
+            letter-spacing: 10px;
+            z-index: 4;
+            white-space: nowrap;
+        }
+
+        #torch {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle 160px at var(--x, -100%) var(--y, -100%), rgba(247, 202, 201, 0.18) 0%, transparent 100%);
+            z-index: 5;
+        }
+
+        .login-container {
+            display: flex;
+            align-items: center;
+            gap: 100px;
+            max-width: 1000px;
+            position: relative;
+            z-index: 6;
+        }
+
+        .lamp-box {
+            position: relative;
+            width: 200px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .lamp-shade {
+            width: 170px;
+            height: 90px;
+            background: linear-gradient(to bottom, #2a1a4a, #080015);
+            border-radius: 90px 90px 15px 15px;
+            position: relative;
+            z-index: 2;
+            transition: all 0.8s ease;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        body[data-on="true"] .lamp-shade {
+            background: #fdfaf0;
+            box-shadow: 0 -20px 100px rgba(146, 168, 209, 0.4), 0 40px 120px rgba(247, 202, 201, 0.3);
+            border: 1px solid white;
+        }
+
+        .lamp-stem { width: 6px; height: 170px; background: #1a0b3e; margin-top: -2px; }
+        .lamp-base { width: 110px; height: 8px; background: #1a0b3e; border-radius: 10px; }
+
+        .pull-cord-hit-area {
+            position: absolute;
+            top: 80px;
+            right: 40px;
+            width: 60px;
+            height: 160px;
+            cursor: pointer;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            transform-origin: top center;
+            transition: transform 0.3s ease-out;
+        }
+
+        .pull-cord-line {
+            width: 2px;
+            height: 110px;
+            background: #333;
+            position: relative;
+        }
+
+        .pull-cord-line::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: -5px;
+            width: 12px;
+            height: 12px;
+            background: #111;
+            border-radius: 50%;
+            transition: all 0.6s;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.2);
+            animation: miniPulse 2.5s infinite ease-in-out;
+        }
+
+        @keyframes miniPulse {
+            0%, 100% { background: #111; box-shadow: 0 0 5px rgba(255, 0, 0, 0); }
+            50% { background: #500; box-shadow: 0 0 12px rgba(255, 0, 0, 0.5); }
+        }
+
+        body[data-on="true"] .pull-cord-line::after { 
+            background: #ffd700; 
+            box-shadow: 0 0 15px gold; 
+            animation: none;
+        }
+
+        #spark {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #ffd700;
+            border-radius: 50%;
+            top: 200px;
+            right: 47px;
+            opacity: 0;
+            z-index: 15;
+        }
+
+        @keyframes sparkUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-110px); opacity: 0; }
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0);
+            padding: 50px;
+            border-radius: 40px;
+            width: 360px;
+            opacity: 0;
+            transform: scale(0.98) translateX(-10px);
+            transition: all 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+            backdrop-filter: blur(0px);
+            pointer-events: none;
+        }
+
+        body[data-on="true"] .login-card {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+            background: rgba(40, 10, 60, 0.2);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            pointer-events: all;
+        }
+
+        .login-card h2 {
+            margin: 0 0 40px 0;
+            font-size: 24px;
+            font-family: 'Playfair Display', serif;
+            color: #f7cac9;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .input-field { margin-bottom: 25px; position: relative; }
+        .input-field label { display: block; font-size: 10px; color: #92a8d1; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .input-field input {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 14px 18px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.5s;
+        }
+
+        .sign-in-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 15px;
+            border: none;
+            background: linear-gradient(135deg, #f7cac9, #92a8d1);
+            color: #1a0b2e;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: all 0.5s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #ui-layer {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            z-index: 2; pointer-events: none; text-align: center; display: none; 
+        }
+
+        .top-container { margin-top: 120px; opacity: 0; transition: opacity 5s ease; position: relative; }
+        .women-day-text { color: #92a8d1; font-size: 13px; letter-spacing: 10px; margin-top: 25px; font-weight: 300; opacity: 0.9; }
+
+        .message-container {
+            position: absolute; top: 55%; transform: translateY(-50%);
+            display: flex; flex-direction: column; align-items: center;
+            opacity: 0; transition: opacity 5s ease;
+        }
+        .main-love-text {
+            font-family: 'Playfair Display', serif; font-size: 40px; 
+            color: #f7cac9; text-shadow: 0 0 20px rgba(247, 202, 201, 0.4);
+            margin-bottom: 5px;
+        }
+        .name-text {
+            font-family: 'Playfair Display', serif; font-size: 38px; 
+            color: #f7cac9; display: flex; align-items: center; justify-content: center; gap: 15px;
+        }
+        .heart-gap { width: 60px; display: inline-block; }
+
+    </style>
+</head>
+<body data-on="false">
+
+    <div id="login-overlay">
+        <div id="torch"></div>
+        <div id="hidden-secret">16.12.2022 - Sonsuza Dek</div>
+        <div class="login-container">
+            <div class="lamp-box">
+                <div class="lamp-shade"></div>
+                <div class="lamp-stem"></div>
+                <div class="lamp-base"></div>
+                <div id="cord" class="pull-cord-hit-area">
+                    <div class="pull-cord-line"></div>
+                </div>
+                <div id="spark"></div>
+            </div>
+            <div class="login-card">
+                <h2>Hoş Geldin Sevgilim</h2>
+                <div class="input-field">
+                    <label>Kullanıcı Adı</label>
+                    <input type="text" id="username" placeholder="MeteEbrar" autocomplete="off">
+                </div>
+                <div class="input-field">
+                    <label>Şifre</label>
+                    <input type="password" id="password" placeholder="••••••">
+                </div>
+                <button class="sign-in-btn" id="login-btn">Aşkı Keşfet</button>
+                <div id="error-msg" style="color: #f7cac9; font-size: 11px; margin-top: 20px; display: none; text-align: center; font-style: italic; opacity: 0.9;">Hatalı bilgiler sevgilim... ❤️</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div class="top-container" id="topUI">
+            <div class="women-day-text">8 MART DÜNYA KADINLAR GÜNÜN KUTLU OLSUN</div>
+        </div>
+        <div class="message-container" id="midUI">
+            <div class="main-love-text">Seni Çok Seviyorum</div>
+            <div class="name-text">Ebrarım <span class="heart-gap"></span></div>
+        </div>
+    </div>
+    
+    <canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width, height, time = 0;
+let particles = [], flowers = [], shootingStars = [], petals = [], trails = [], ghostlyHearts = [], words = [], novas = [], wishes = [], loginSonarRipples = [], loginDust = [];
+let isStarted = false, isLampOn = false;
+let secretFocus = 0; 
+let loginAttempts = 0; 
+const mouse = { x: -1000, y: -1000 };
+
+const overlay = document.getElementById('login-overlay');
+const torch = document.getElementById('torch');
+const secret = document.getElementById('hidden-secret');
+const cord = document.getElementById('cord');
+const spark = document.getElementById('spark');
+const loginBtn = document.getElementById('login-btn');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const uiLayer = document.getElementById('ui-layer');
+
+// ENTER TUŞU ÇÖZÜMÜ
+[usernameInput, passwordInput].forEach(input => {
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleLogin();
+    });
+});
+
+overlay.addEventListener('mousedown', e => {
+    if(!isLampOn) {
+        loginSonarRipples.push({x: e.clientX, y: e.clientY, r: 0, a: 0.4});
+    }
+});
+
+overlay.addEventListener('mousemove', e => {
+    torch.style.setProperty('--x', e.clientX + 'px');
+    torch.style.setProperty('--y', e.clientY + 'px');
+    
+    if(!isLampOn && time % 3 === 0) {
+        loginDust.push({x: e.clientX, y: e.clientY, vx: (Math.random()-0.5), vy: (Math.random()-0.5), a: 0.6, s: Math.random()*2+1});
+    }
+
+    const secretRect = secret.getBoundingClientRect();
+    const centerX = secretRect.left + secretRect.width/2;
+    const centerY = secretRect.top + secretRect.height/2;
+    const dx = e.clientX - centerX;
+    const dy = e.clientY - centerY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    
+    if(dist < 200) {
+        secretFocus = Math.min(1, secretFocus + 0.015);
+        let op = (secretFocus * 0.9).toFixed(2);
+        let blurVal = (15 * (1 - secretFocus)).toFixed(1);
+        secret.style.opacity = op;
+        secret.style.filter = `blur(${blurVal}px)`;
+        secret.style.textShadow = `0 0 ${secretFocus * 20}px rgba(247, 202, 201, 0.8)`;
+    } else {
+        secretFocus = Math.max(0, secretFocus - 0.008);
+        secret.style.opacity = (secretFocus * 0.9).toFixed(2);
+    }
+
+    const cordRect = cord.getBoundingClientRect();
+    const cordCenterX = cordRect.left + cordRect.width / 2;
+    const distCord = e.clientX - cordCenterX;
+    if (Math.abs(distCord) < 150 && !isLampOn) {
+        const angle = (distCord / 150) * 15;
+        cord.style.transform = `rotate(${angle}deg)`;
+    } else {
+        cord.style.transform = `rotate(0deg)`;
+    }
+});
+
+cord.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if(!isLampOn) {
+        spark.style.animation = 'sparkUp 0.6s ease-out forwards';
+        setTimeout(() => {
+            isLampOn = true;
+            document.body.setAttribute('data-on', isLampOn);
+            torch.style.display = 'none';
+            secret.style.display = 'none';
+            overlay.style.cursor = 'default';
+            cord.style.transform = 'rotate(0deg)';
+        }, 500);
+    } else {
+        isLampOn = false;
+        document.body.setAttribute('data-on', isLampOn);
+        torch.style.display = 'block';
+        secret.style.display = 'block';
+        overlay.style.cursor = 'none';
+        spark.style.animation = 'none';
+    }
+});
+
+loginBtn.addEventListener('click', handleLogin);
+
+function handleLogin() {
+    if (!isLampOn) return;
+    const user = usernameInput.value.trim().toLowerCase();
+    const pass = passwordInput.value;
+
+    if (user === 'meteebrar' && pass === '161222') {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            uiLayer.style.display = 'flex';
+            document.body.style.background = "#080015";
+            isStarted = true;
+            init(); 
+        }, 2000);
+    } else {
+        loginAttempts++;
+        const errorMsg = document.getElementById('error-msg');
+        errorMsg.innerText = loginAttempts >= 3 ? "İyi düşün sevgilim... Önemli bir tarih şifremiz." : "Hatalı bilgiler sevgilim... ❤️";
+        errorMsg.style.display = 'block';
+    }
+}
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+
+window.addEventListener('mousedown', e => {
+    if(isStarted) {
+        novas.push(new ClickNova(e.clientX, e.clientY));
+        for(let i=0; i<3; i++) wishes.push(new WishStar(e.clientX, e.clientY));
+    }
+});
+
+window.addEventListener('mousemove', e => { 
+    mouse.x = e.clientX; mouse.y = e.clientY; 
+    if(isStarted && time % 5 === 0) {
+        trails.push(new StardustTrail(e.clientX, e.clientY));
+    }
+});
+
+const getHeartPoint = (t, size) => ({
+    x: size * 16 * Math.pow(Math.sin(t), 3),
+    y: -size * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t))
+});
+
+const getInfinityPoint = (t, size) => {
+    let scale = size / (3 - Math.cos(2 * t));
+    return { x: scale * Math.cos(t), y: scale * Math.sin(2 * t) / 2 };
+};
+
+// --- YENİDEN EKLENEN VE GELİŞTİRİLEN KELİMELER ---
+class FloatingWord {
+    constructor() {
+        const wordList = ["Huzur", "Aşk", "Güveniyorum", "Bize", "Sonsuzluk", "Mutluluk", "Seni Seviyorum", "İyi ki varsın"];
+        this.text = wordList[Math.floor(Math.random() * wordList.length)];
+        this.reset();
+    }
+    reset() {
+        this.x = Math.random() * width;
+        this.y = height + 100;
+        this.speed = Math.random() * 0.2 + 0.15; // Meditatif ve dingin hız
+        this.alpha = 0;
+        this.size = Math.random() * 5 + 13;
+        this.drift = Math.random() * 1.5 + 0.5; // Sağa sola salınım gücü
+    }
+    update() {
+        this.y -= this.speed;
+        this.x += Math.sin(this.y * 0.01) * this.drift; // Sağa sola "dolaşma" etkisi
+        if(this.y < height * 0.9 && this.alpha < 0.25) this.alpha += 0.002;
+        if(this.y < height * 0.1) this.alpha -= 0.002;
+        if(this.alpha <= 0 && this.y < -50) this.reset();
+    }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = "#92a8d1";
+        ctx.font = `italic 500 ${this.size}px Montserrat`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "rgba(146, 168, 209, 0.4)";
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+    }
+}
+
+class WishStar {
+    constructor(x, y) {
+        this.x = x; this.y = y;
+        this.vx = (Math.random() - 0.5) * 1.5;
+        this.vy = -Math.random() * 2 - 0.5;
+        this.alpha = 1;
+        this.size = Math.random() * 1.5 + 1;
+    }
+    update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.01; }
+    draw() {
+        ctx.save(); ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = "#ffd700"; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+    }
+}
+
+class ClickNova {
+    constructor(x, y) { this.x = x; this.y = y; this.radius = 0; this.alpha = 0.5; }
+    update() { this.radius += 3.5; this.alpha -= 0.012; }
+    draw() {
+        ctx.save(); ctx.strokeStyle = `rgba(247, 202, 201, ${this.alpha})`;
+        ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+        ctx.stroke(); ctx.restore();
+    }
+}
+
+class GhostlyHeart {
+    constructor() { this.reset(); }
+    reset() {
+        this.x = Math.random() * width; this.y = height + 50;
+        this.size = Math.random() * 0.4 + 0.2; this.speed = Math.random() * 0.25 + 0.1;
+        this.alpha = 0; this.maxAlpha = Math.random() * 0.12 + 0.04;
+    }
+    update() {
+        this.y -= this.speed; this.x += Math.sin(this.y * 0.01) * 0.15;
+        if(this.y < height * 0.7) this.alpha -= 0.0005;
+        else if(this.alpha < this.maxAlpha) this.alpha += 0.001;
+        if (this.alpha <= 0 && this.y < height * 0.5) this.reset();
+    }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y); ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = "#f7cac9"; ctx.beginPath();
+        for(let i=0; i<Math.PI*2; i+=0.15) {
+            let p = getHeartPoint(i, this.size);
+            i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+        }
+        ctx.fill(); ctx.restore();
+    }
+}
+
+class StardustTrail {
+    constructor(x, y) {
+        this.x = x; this.y = y;
+        this.size = Math.random() * 1.5 + 0.5;
+        this.alpha = 0.35;
+        this.vx = (Math.random() - 0.5) * 0.15; this.vy = -Math.random() * 0.3 - 0.1;
+    }
+    update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.005; }
+    draw() {
+        ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = "#92a8d1";
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+}
+
+class NebulaParticle {
+    constructor(isSmall) {
+        this.type = isSmall ? 'small' : 'big';
+        this.t = Math.random() * Math.PI * 2;
+        this.x = width/2; this.y = height/2;
+        this.size = isSmall ? 1.4 : Math.random() * 1.6 + 0.6;
+        this.speed = Math.random() * 0.006 + 0.004;
+    }
+    update() {
+        let targetX, targetY;
+        if (time < 500) { 
+            let inf = getInfinityPoint(time * 0.006 + this.t, width * 0.42);
+            targetX = width / 2 + inf.x; targetY = height / 2 + inf.y;
+        } else {
+            const pulse = 1 + Math.sin(time * 0.015) * 0.04;
+            if (this.type === 'small') {
+                let p = getHeartPoint(this.t, 2.1);
+                targetX = width / 2 + 125 + p.x; targetY = height * 0.55 + 28 + p.y; 
+            } else {
+                let p = getHeartPoint(this.t, 18.5); 
+                targetX = width / 2 + p.x * pulse; targetY = height * 0.55 + p.y * pulse;
+            }
+            
+            const dx = mouse.x - this.x;
+            const dy = mouse.y - this.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 130) {
+                const angle = Math.atan2(dy, dx);
+                this.x -= Math.cos(angle) * (130 - dist) * 0.04;
+                this.y -= Math.sin(angle) * (130 - dist) * 0.04;
+            }
+        }
+        this.x += (targetX - this.x) * this.speed;
+        this.y += (targetY - this.y) * this.speed;
+    }
+    draw() {
+        let color = (this.type === 'small' && time > 500 ? "#fff" : "#f7cac9");
+        ctx.fillStyle = color; ctx.globalAlpha = 0.8;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+    }
+}
+
+class AstralBloom {
+    constructor(x) {
+        this.x = x; this.growth = 0; this.maxGrowth = 70 + Math.random() * 50;
+        this.bloom = 0; this.seed = Math.random() * 100;
+        this.pollens = [];
+    }
+    draw() {
+        if (time < 450) return;
+        if (this.growth < this.maxGrowth) this.growth += 0.28;
+        const headY = height - this.growth;
+        const dist = Math.sqrt((mouse.x - this.x)**2 + (mouse.y - headY)**2);
+        let interact = dist < 150 ? (150 - dist) * 0.08 : 0;
+        ctx.save(); ctx.translate(this.x, height);
+        let sway = Math.sin(time * 0.012 + this.seed) * (3.5 + interact);
+        ctx.strokeStyle = "rgba(146, 168, 209, 0.25)";
+        ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(sway * 2, -this.growth/2, sway, -this.growth); ctx.stroke();
+        if (this.growth >= this.maxGrowth) {
+            if (this.bloom < 18) this.bloom += 0.1;
+            ctx.translate(sway, -this.growth);
+            ctx.rotate(time * 0.005);
+            for(let i = 0; i < 8; i++) {
+                ctx.rotate(Math.PI / 4);
+                ctx.fillStyle = i % 2 === 0 ? "rgba(247, 202, 201, 0.45)" : "rgba(146, 168, 209, 0.45)";
+                ctx.beginPath(); ctx.ellipse(this.bloom/2, 0, this.bloom, this.bloom/3, 0, 0, Math.PI * 2); ctx.fill();
+            }
+            if(Math.random() > 0.985) this.pollens.push({x:0, y:0, vx:(Math.random()-0.5)*0.4, vy:-Math.random()*0.3, a:1});
+        }
+        this.pollens.forEach((p, i) => {
+            p.x += p.vx; p.y += p.vy; p.a -= 0.006;
+            if(p.a <= 0) this.pollens.splice(i,1);
+            ctx.fillStyle = `rgba(255, 215, 0, ${p.a*0.3})`;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 0.8, 0, Math.PI*2); ctx.fill();
+        });
+        ctx.restore();
+    }
+}
+
+class ShootingStar {
+    constructor() { this.reset(); }
+    reset() {
+        this.x = Math.random() * width; this.y = Math.random() * height * 0.4;
+        this.vx = (Math.random() * 2 + 1.5); this.vy = (Math.random() * 0.8 + 0.3);
+        this.len = Math.random() * 120 + 60; this.active = false;
+    }
+    update() {
+        if (!this.active && Math.random() > 0.9985) this.active = true;
+        if (!this.active) return;
+        this.x += this.vx; this.y += this.vy;
+        if (this.x > width || this.y > height) this.reset();
+    }
+    draw() {
+        if (!this.active) return;
+        let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.len, this.y - this.len * 0.2);
+        grad.addColorStop(0, `rgba(146, 168, 209, 0.4)`); grad.addColorStop(1, `rgba(247, 202, 201, 0)`);
+        ctx.strokeStyle = grad; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.len, this.y - this.len * 0.2); ctx.stroke();
+    }
+}
+
+function init() {
+    resize();
+    particles = []; flowers = []; shootingStars = []; petals = []; trails = []; ghostlyHearts = []; words = []; novas = []; wishes = [];
+    for(let i=0; i<600; i++) particles.push(new NebulaParticle(i < 100));
+    const flowerCount = 13;
+    const spacing = (width - 60) / (flowerCount - 1);
+    for(let i=0; i < flowerCount; i++) flowers.push(new AstralBloom(30 + i * spacing));
+    for(let i=0; i<2; i++) shootingStars.push(new ShootingStar());
+    for(let i=0; i<4; i++) ghostlyHearts.push(new GhostlyHeart());
+    for(let i=0; i<6; i++) words.push(new FloatingWord()); // 6 kelime sürekli dolaşacak
+}
+
+function animate() {
+    if (!isStarted) { 
+        ctx.fillStyle = "#080015";
+        ctx.fillRect(0,0,width,height);
+        
+        loginDust.forEach((d, i) => {
+            d.x += d.vx; d.y += d.vy; d.a -= 0.005;
+            if(d.a <= 0) loginDust.splice(i, 1);
+            ctx.fillStyle = `rgba(247, 202, 201, ${d.a})`;
+            ctx.beginPath(); ctx.arc(d.x, d.y, d.s, 0, Math.PI*2); ctx.fill();
+        });
+
+        loginSonarRipples.forEach((r, i) => {
+            r.r += 6; r.a -= 0.008;
+            if(r.a <= 0) loginSonarRipples.splice(i, 1);
+            ctx.save(); ctx.strokeStyle = `rgba(247, 202, 201, ${r.a})`;
+            ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke(); ctx.restore();
+        });
+        requestAnimationFrame(animate); 
+        return; 
+    }
+    
+    // MOR NEFES ALAN GENİŞ NEBULA (Genişlik ve renk revize edildi)
+    const breathing = Math.sin(time * 0.01) * 35;
+    let grad = ctx.createRadialGradient(width/2, height*0.5, 0, width/2, height*0.5, (width*0.8) + breathing);
+    grad.addColorStop(0, "rgba(55, 20, 95, 0.38)"); 
+    grad.addColorStop(0.6, "rgba(25, 8, 50, 0.18)"); 
+    grad.addColorStop(1, "rgba(8, 0, 20, 1)"); 
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Sonsuzluk Tarihi ve Yörünge Yıldızları
+    ctx.save(); ctx.translate(width / 2, 80);
+    ctx.font = "bold 26px Montserrat";
+    ctx.fillStyle = `rgba(247, 202, 201, ${Math.min(1, time / 700)})`;
+    ctx.textAlign = "center";
+    ctx.fillText("16.12.2022", 0, 10);
+    if (time > 100) {
+        const orbitRadius = 110; const orbitSpeed = time * 0.008;
+        ctx.fillStyle = "#fff"; ctx.globalAlpha = 0.4;
+        ctx.beginPath(); ctx.arc(Math.cos(orbitSpeed)*orbitRadius, Math.sin(orbitSpeed)*orbitRadius*0.3, 1.2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(Math.cos(orbitSpeed + Math.PI)*orbitRadius, Math.sin(orbitSpeed + Math.PI)*orbitRadius*0.3, 1.2, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+
+    if (time > 650) {
+        document.getElementById('topUI').style.opacity = "1";
+        document.getElementById('midUI').style.opacity = "1";
+    }
+
+    words.forEach(w => { w.update(); w.draw(); });
+    novas.forEach((n, i) => { n.update(); n.draw(); if(n.alpha <= 0) novas.splice(i, 1); });
+    wishes.forEach((w, i) => { w.update(); w.draw(); if(w.alpha <= 0) wishes.splice(i,1); });
+    ghostlyHearts.forEach(h => { h.update(); h.draw(); });
+    shootingStars.forEach(s => { s.update(); s.draw(); });
+    trails.forEach((t, i) => { t.update(); t.draw(); if(t.alpha <= 0) trails.splice(i, 1); });
+    particles.forEach(p => { p.update(); p.draw(); });
+    flowers.forEach(f => { f.draw(); });
+    
+    time++;
+    requestAnimationFrame(animate);
+}
+
+resize();
+animate();
+</script>
+</body>
+</html>
